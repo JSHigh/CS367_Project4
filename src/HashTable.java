@@ -13,6 +13,8 @@ import java.util.LinkedList;
  * Note that the hashtable allows duplicate entries.
  */
 public class HashTable<T> {
+	double loadFactor = 0;
+	Integer
     
     /**
      * Constructs an empty hashtable with the given initial size, maximum load
