@@ -1,0 +1,102 @@
+/*******************************************************************************
+File:             Questions.txt
+
+Author:           <your name and CS login>
+                  <your partner's name and CS login, if pair programming>
+
+Completion Date:  <date you completed this source file>
+
+Course:           CS 367, Fall 2016 
+*******************************************************************************/
+Directions: answer the following seven (7) questions.  Note: some of the 
+questions may require you to know how the LinkedList class is implemented; in 
+these cases, you should assume that it is implemented as a doubly-linked chain
+of nodes with references to the head and the tail.
+
+1) The value tested by TestHash are Integer.  For an Integer storing value k, 
+what is the hashCode() returned?  By trying a few values you can quickly figure 
+out what it does.  
+
+Answer:
+
+
+2) Suppose you insert an item into your hashtable and then immediately do a 
+lookup on that item.  What is the worst-case complexity of your program in this
+situation?  Briefly explain your answer.
+
+Answer:
+
+
+3) What is the worst-case complexity of your dump() method?  Briefly explain
+your answer, making sure to identify the problem size(s).
+
+Answer:
+
+
+4) In this question you will run TestHash four times using the parameters 
+indicated in the table:
+    run1        439 323232 10.0 60 0 filename
+    run2        439 323232 10.0 61 0 filename
+    run3        439 323232 10.0 60 0 filename
+    run4        439 323232 10.0 61 0 filename
+where filename can be any file you want.  
+- For run1 and run2 you will use the TestHash program as written.  
+- For run3 and run4 you will modify the TestHash program so that instead of 
+  inserting random integers into the hashtable, it will insert the numbers 
+  0, 3, 6, 9, 12, ...
+  The easiest way to do this is to replace the line:
+      table.insert(new Integer(randGen.nextInt()));
+  with the line:
+      table.insert(new Integer(3*k)); 
+
+What are the hashtable statistics for each of the runs?  
+
+Answer:
+
+
+5) In this question you will again run TestHash four times, this time using the 
+parameters:
+    run5        439 323232 0.8 60 0 filename
+    run6        439 323232 0.8 61 0 filename
+    run7        439 323232 0.8 60 0 filename
+    run8        439 323232 0.8 61 0 filename
+where filename can be any file you want.  
+- For run5 and run6 you will use the TestHash program as written.  
+- For run7 and run8 you will modify the TestHash program so that instead of
+  inserting random integers into the hashtable, it will insert the numbers 
+  0, 3, 6, 9, 12, ...
+  The easiest way to do this is to replace the line:
+      table.insert(new Integer(randGen.nextInt()));
+  with the line:
+      table.insert(new Integer(3*k)); 
+
+What are the hashtable statistics for each of the runs?  
+
+Answer:
+
+
+6) In this question you will again run TestHash four times, this time using the 
+parameters:
+    run9        439 323232 10.0 11 0 filename
+    run10       439 323232 10.0 11 5 filename
+    run11       439 323232 0.8 11 0 filename
+    run12       439 323232 0.8 11 5 filename
+where filename can be any file you want.  
+For all these runs you will use the TestHash program as written.  
+
+What are the hashtable statistics for each of the runs?  
+
+Answer:
+
+
+7) Briefly analyze your results from questions 4, 5, and 6.  Your analysis 
+should consider the following (in relation to the final distribution of the 
+hashtable):
+    - the characteristics of the table size (i.e., prime or non-prime)
+    - the characteristics of the input data 
+    - the load factor (i.e., is the hashtable resized or not?)
+    - the maximum chain length (i.e., whether or not there is a max)
+and describe how they are related.
+
+Answer:
+0
