@@ -1,0 +1,25 @@
+Parameters used:
+  # items to hash: 20
+  random # seed: 15594
+  max load factor: 0.8
+  initial size of hash table: 10
+  max chain length: none
+  output file name: P4Test.txt
+Parameters used: 
+Hashtable statistics: 
+Hashtable contents:
+18: [-1405452966, -73356125, ]
+23: [-1612805281, ]
+29: [-1114802485, -1016347055, 1112842244, ]
+32: [1967537570, ]
+37: [1303847548, 1348606421, ]
+48: [601131855, ]
+56: [-778320844, ]
+63: [-53654762, ]
+67: [193019292, ]
+89: [-1959444286, ]
+94: [-2014249906, ]
+96: [1067098646, ]
+113: [2022756513, ]
+118: [1635850418, ]
+171: [80898821, ]

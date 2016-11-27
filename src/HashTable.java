@@ -1,4 +1,7 @@
+import java.awt.event.ItemEvent;
 import java.io.*;
+import java.lang.reflect.Array;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -13,8 +16,16 @@ import java.util.LinkedList;
  * Note that the hashtable allows duplicate entries.
  */
 public class HashTable<T> {
-	double loadFactor = 0;
-	Integer
+	private double MAX_LOAD_FACTOR = 0;
+	private int INIT_SIZE = 0;
+	private int MAX_CHAIN_LENGTH = 0;
+	private int MAX_CHAIN_LENGTH_RESIZE = 5;
+	
+	private double currentLoadFactor = 0;
+	private int keyCount = 0;
+	private int maxChainResizeCount = 0;
+	
+	private LinkedList<T>[] htArray;
     
     /**
      * Constructs an empty hashtable with the given initial size, maximum load
@@ -31,7 +42,7 @@ public class HashTable<T> {
      *         equal to 0 or if <tt>loadFactor</tt> is less than or equal to 0.0
      **/
     public HashTable(int initSize, double loadFactor) {
-        
+    	CreateTable(initSize, loadFactor, 0); // no max chain length if not specified
     }
     
     
@@ -52,9 +63,38 @@ public class HashTable<T> {
      *         or if <tt>maxChainLength</tt> is less than or equal to 0.
      **/
     public HashTable(int initSize, double loadFactor, int maxChainLength) {
-        
+    	CreateTable(initSize, loadFactor, maxChainLength);
     }
     
+    /**
+     * TODO: Fill this out.
+     * @param initsize
+     * @param loadFactor
+     * @param maxChainLength
+     */
+    @SuppressWarnings("unchecked")
+	private void CreateTable(int initsize, double loadFactor, int maxChainLength) {
+    	if (initsize < 0 || loadFactor < 0.0 || maxChainLength < 0) {
+    		throw new IllegalArgumentException();
+    	}
+    	this.INIT_SIZE = initsize;
+    	this.MAX_LOAD_FACTOR = loadFactor;
+    	this.MAX_CHAIN_LENGTH = maxChainLength;
+    	this.htArray = (LinkedList<T>[]) new LinkedList[this.INIT_SIZE];
+    }
+    /**
+     * TODO: fill out
+     * @param item
+     * @return
+     */
+    private int hash(T item) {
+    	int tabLen = this.htArray.length;
+    	int itemHash = item.hashCode() % tabLen;
+    	if (itemHash < 0) {
+    		itemHash += tabLen;
+    	}
+    	return itemHash;
+    }
     
     /**
      * Determines if the given item is in the hashtable and returns it if 
@@ -65,7 +105,14 @@ public class HashTable<T> {
      * @return the item if it is found and <tt>null</tt> if not found.
      **/
     public T lookup(T item) {
-        return null;
+    	if (keyCount == 0) {return null;}
+    	int itemHash = hash(item);
+    	LinkedList<?> valueList = this.htArray[itemHash];
+    	if (valueList == null) {return null;}
+    	if (valueList.contains(item)) {
+    		return item;
+    	}
+    	return null;
     }
     
     
@@ -82,6 +129,8 @@ public class HashTable<T> {
      * (not equal) the maximum chain length (given in the constructor), then the
      * hashtable is resized.
      * 
+     * 	https://piazza.com/class/iri4w46g18v1nd?cid=191
+     * 
      * When resizing, to make sure the size of the table is reasonable, the new 
      * size is always 2 x <i>old size</i> + 1.  For example, size 101 would 
      * become 203.  (This guarantees that it will be an odd size.)
@@ -92,9 +141,60 @@ public class HashTable<T> {
      * @throws NullPointerException if <tt>item</tt> is <tt>null</tt>.
      **/
     public void insert(T item) {
+    	// check for bad value
+        if (item == null) {throw new NullPointerException();}
         
+        // get hash of item to insert
+        int itemHash = hash(item);
+        LinkedList<T> llTemp = this.htArray[itemHash];
+        
+        // try to insert into ht
+        // case where no values for this key are yet in the ht
+        if (llTemp == null) {
+        	llTemp = new LinkedList<>();
+        	llTemp.add(item);
+        	this.keyCount += 1;
+        	UpdateLoadFactor();
+        	// check if we need to resize due to load factor
+        	if (this.currentLoadFactor > MAX_LOAD_FACTOR) {
+        		resize();
+        		// rehash new item for new table size
+        		itemHash = hash(item);
+        	}
+        	// add linked list to ht
+        	this.htArray[itemHash] = llTemp;
+        }
+        else {
+        	// update existing chain in ht
+            if (llTemp.size() + 1 > this.MAX_CHAIN_LENGTH && maxChainResizeCount < MAX_CHAIN_LENGTH_RESIZE) {
+            	// if we have max chain length conflict, resize, but only a limited number of times
+        		maxChainResizeCount += 1;
+        		resize();
+            }
+            llTemp.add(item);
+        }
     }
     
+    private void resize() {
+    	int oldSize = this.htArray.length;
+    	int newSize = oldSize * 2 + 1;
+    	LinkedList<T>[] newArray = (LinkedList<T>[]) new LinkedList[newSize];
+    	LinkedList<T> llTemp = null;
+    	int newHash = 0;
+    	for (int i = 0; i < oldSize; i++) {
+    		llTemp = this.htArray[i];
+    		if (llTemp != null) {
+    			if ( llTemp.size() != 0) {
+    	    		T firstval = llTemp.getFirst();
+    	    		if (firstval != null) {
+    	        		newHash = hash(firstval);
+    	        		newArray[newHash] = llTemp;	
+    	    		}
+    			}
+    		}
+    	}
+    	this.htArray = newArray;
+    }
     
     /**
      * Removes and returns the given item from the hashtable.  If the item is 
@@ -106,7 +206,22 @@ public class HashTable<T> {
      * @return the removed item if it was found and <tt>null</tt> if not found.
      **/
     public T delete(T item) {
-        return null;  
+    	T retVal = null;
+    	if (keyCount == 0) {return null;}
+    	int itemHash = hash(item);
+    	LinkedList<?> valueList = this.htArray[itemHash];
+    	if (valueList == null) {return null;}
+    	if (valueList.contains(item)) {
+    		valueList.remove(item);	// removes first occurrence
+    		retVal = item;
+    	}
+    	this.keyCount -= 1;
+    	UpdateLoadFactor();
+    	return retVal;
+    }
+    
+    private void UpdateLoadFactor() {
+    	this.currentLoadFactor = this.keyCount / (double) this.htArray.length;
     }
     
     
@@ -120,7 +235,22 @@ public class HashTable<T> {
      * @param out the place to print all the output.
      **/
     public void dump(PrintStream out) {
-
+    	out.println("Hashtable contents:");
+    	for (int i = 0; i < this.htArray.length; i++) {
+    		LinkedList<T> llTemp = this.htArray[i];
+    		if (llTemp != null) {
+        		String line = "";
+        		if (llTemp.size() > 0) {
+        			line = Integer.toString(i) + ": [";
+        			Iterator<T> llIter = llTemp.iterator();
+        			while (llIter.hasNext()) {
+        				line += llIter.next() + ", ";	// TODO: fix trailing comma
+        			}
+        			line += "]";
+        			out.println(line);
+        		}
+    		}
+    	}
     }
     
   
@@ -139,6 +269,9 @@ public class HashTable<T> {
      * @param out the place to print all the output.
      **/
     public void displayStats(PrintStream out) {
-        
+        out.println("Parameters used: ");
+        // TODO: output required params
+        out.println("Hashtable statistics: ");
+        // TODO: output required stats
     }
 }
