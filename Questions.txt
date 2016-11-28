@@ -1,10 +1,12 @@
 /*******************************************************************************
-File:             Questions.txt
+File			Questions.txt
 
-Author:           <your name and CS login>
-                  <your partner's name and CS login, if pair programming>
+Author1:			Justin High
+				high
+Author2:			Aaron Gordner
+				gordner
 
-Completion Date:  <date you completed this source file>
+Completion Date:  11/29/2016
 
 Course:           CS 367, Fall 2016 
 *******************************************************************************/
@@ -17,20 +19,29 @@ of nodes with references to the head and the tail.
 what is the hashCode() returned?  By trying a few values you can quickly figure 
 out what it does.  
 
-Answer:
+Answer: For an integer, the hashcode is the integer value.
 
 
 2) Suppose you insert an item into your hashtable and then immediately do a 
 lookup on that item.  What is the worst-case complexity of your program in this
 situation?  Briefly explain your answer.
 
-Answer:
+Answer: Worst-case complexity is a function of the hash method (should be O(1)),
+ position lookup (O(1)), and adding the new value to the array. Adding a new 
+ value to the end of the linked list is O(1) with a tail reference. If an array
+ expansion is needed due to load factor or chain length, that is O(N). Overall,
+ worst-case is O(N).
+
 
 
 3) What is the worst-case complexity of your dump() method?  Briefly explain
 your answer, making sure to identify the problem size(s).
 
-Answer:
+Answer: Worst-case complexity of the dump() method is O(N), where N is the
+ number of values in the hashtable. Regardless of the number of chains and
+ average (or max) chain length, every value must be visited. This could be
+ improved if there was accounting for duplicate values in a single linked
+ list.
 
 
 4) In this question you will run TestHash four times using the parameters 
