@@ -90,8 +90,8 @@ public class HashTable<T> {
     	this.htArray = (LinkedList<T>[]) new LinkedList[this.INIT_SIZE];
     }
     /**
-     * Determines a hash value for a given object by moduloing it
-     * by the table length. If the modulo is negative, the value is
+     * Determines a hash value for a given object by taking the modulous
+     * of the table length. If the modulo is negative, the value is
      * increased by the table length.
      * @param item
      * @return
@@ -181,6 +181,7 @@ public class HashTable<T> {
         		resize();
             }
             llTemp.add(item);
+            this.keyCount +=1;
         }
     }
     
@@ -315,7 +316,7 @@ public class HashTable<T> {
         //output required stats
         out.println("Hashtable statistics: ");
         out.println("  Current table size: " + this.htArray.length);
-        out.println("  Number of items in table: " + sum);
+        out.println("  Number of items in table: " + this.keyCount);
         out.println("  Current load factor: " + this.currentLoadFactor);
         out.println("  Length of longest chain: " + longChain);
         out.println("  Number of chains of length 0: " + lenZeroChain);
