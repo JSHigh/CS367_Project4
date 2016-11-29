@@ -99,9 +99,11 @@ public class HashTable<T> {
     private int hash(T item) {
     	int tabLen = this.htArray.length;
     	int itemHash = item.hashCode() % tabLen;
+    	
     	if (itemHash < 0) {
     		itemHash += tabLen;
     	}
+    	System.out.println(itemHash + " | " + item.hashCode() + " | " + tabLen); //TODO: remove
     	return itemHash;
     }
     
@@ -153,6 +155,9 @@ public class HashTable<T> {
     	// check for bad value
         if (item == null) {throw new NullPointerException();}
         
+        //increment total count
+        this.keyCount += 1;
+        
         // get hash of item to insert
         int itemHash = hash(item);
         LinkedList<T> llTemp = this.htArray[itemHash];
@@ -162,7 +167,6 @@ public class HashTable<T> {
         if (llTemp == null) {
         	llTemp = new LinkedList<>();
         	llTemp.add(item);
-        	this.keyCount += 1;
         	UpdateLoadFactor();
         	// check if we need to resize due to load factor
         	if (this.currentLoadFactor > MAX_LOAD_FACTOR) {
@@ -181,28 +185,54 @@ public class HashTable<T> {
         		resize();
             }
             llTemp.add(item);
-            this.keyCount +=1;
         }
     }
     
     /**
      * Resizes the hash table to twice the previous size plus 1
      */
-    private void resize() {
+    @SuppressWarnings("unchecked")
+	private void resize() {
+    	System.out.println("resizing..."); //TODO: remove
     	int oldSize = this.htArray.length;
-    	int newSize = oldSize * 2 + 1;
+    	int newSize = (oldSize * 2) + 1;
+    	
+    	//initialize new array
     	LinkedList<T>[] newArray = (LinkedList<T>[]) new LinkedList[newSize];
+    	for (int i = 0; i < newSize; i++) {
+    		newArray[i] = new LinkedList<T>();
+    	}
+    	
+    	//TODO: do we need an iterator here instead? I don't think your code is rehashing all the values, just the first one
+    	//loop through old array and rehash everything
     	LinkedList<T> llTemp = null;
     	int newHash = 0;
     	for (int i = 0; i < oldSize; i++) {
+//    		llTemp = this.htArray[i];
+//    		if (llTemp != null) {
+//        		Iterator<T> llIter = llTemp.iterator();
+//        		while (llIter.hasNext()) {
+//        			T nextItem = llIter.next();
+//        			newHash = hash(nextItem);
+//        			newArray[newHash].add(nextItem);
+//        		}
+//    		}
+    		
     		llTemp = this.htArray[i];
     		if (llTemp != null) {
     			if ( llTemp.size() != 0) {
-    	    		T firstval = llTemp.getFirst();
-    	    		if (firstval != null) {
-    	        		newHash = hash(firstval);
-    	        		newArray[newHash] = llTemp;	
-    	    		}
+    				Iterator<T> llIter = llTemp.iterator();
+    				while (llIter.hasNext()) {
+    					T nextItem = llIter.next();
+    					newHash = hash(nextItem);
+    					newArray[newHash].add(nextItem);
+    				}
+    				
+//    	    		T firstval = llTemp.getFirst();
+//    	    		if (firstval != null) {
+//    	        		newHash = hash(firstval);
+//    	        		newArray[newHash] = llTemp;	
+//    	    		}
     			}
     		}
     	}
