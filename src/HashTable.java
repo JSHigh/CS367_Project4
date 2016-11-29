@@ -25,6 +25,10 @@ public class HashTable<T> {
 	private int keyCount = 0;
 	private int maxChainResizeCount = 0;
 	
+	private int longChain = 0;
+    private int lenZeroChain = 0;
+    private double avgLenChain = 0;
+	
 	private LinkedList<T>[] htArray;
     
     /**
@@ -67,32 +71,39 @@ public class HashTable<T> {
     }
     
     /**
-     * TODO: Fill this out.
-     * @param initsize
-     * @param loadFactor
-     * @param maxChainLength
+     * Creates a hash table with the given initial size, load factor, and
+     * maximum chain lengh.
+     * @param initsize - integer initial size of the hashtable
+     * @param loadFactor - load factor expressed as a real number
+     * @param maxChainLength - max chain length before resizing
+     * @throws IllegalArgumentException - if any of the inputs are less than 0
      */
     @SuppressWarnings("unchecked")
 	private void CreateTable(int initsize, double loadFactor, int maxChainLength) {
     	if (initsize < 0 || loadFactor < 0.0 || maxChainLength < 0) {
     		throw new IllegalArgumentException();
     	}
+    	
     	this.INIT_SIZE = initsize;
     	this.MAX_LOAD_FACTOR = loadFactor;
     	this.MAX_CHAIN_LENGTH = maxChainLength;
     	this.htArray = (LinkedList<T>[]) new LinkedList[this.INIT_SIZE];
     }
     /**
-     * TODO: fill out
+     * Determines a hash value for a given object by taking the modulous
+     * of the table length. If the modulo is negative, the value is
+     * increased by the table length.
      * @param item
      * @return
      */
     private int hash(T item) {
     	int tabLen = this.htArray.length;
     	int itemHash = item.hashCode() % tabLen;
+    	
     	if (itemHash < 0) {
     		itemHash += tabLen;
     	}
+    	System.out.println(itemHash + " | " + item.hashCode() + " | " + tabLen); //TODO: remove
     	return itemHash;
     }
     
@@ -144,6 +155,9 @@ public class HashTable<T> {
     	// check for bad value
         if (item == null) {throw new NullPointerException();}
         
+        //increment total count
+        this.keyCount += 1;
+        
         // get hash of item to insert
         int itemHash = hash(item);
         LinkedList<T> llTemp = this.htArray[itemHash];
@@ -153,7 +167,6 @@ public class HashTable<T> {
         if (llTemp == null) {
         	llTemp = new LinkedList<>();
         	llTemp.add(item);
-        	this.keyCount += 1;
         	UpdateLoadFactor();
         	// check if we need to resize due to load factor
         	if (this.currentLoadFactor > MAX_LOAD_FACTOR) {
@@ -175,21 +188,51 @@ public class HashTable<T> {
         }
     }
     
-    private void resize() {
+    /**
+     * Resizes the hash table to twice the previous size plus 1
+     */
+    @SuppressWarnings("unchecked")
+	private void resize() {
+    	System.out.println("resizing..."); //TODO: remove
     	int oldSize = this.htArray.length;
-    	int newSize = oldSize * 2 + 1;
+    	int newSize = (oldSize * 2) + 1;
+    	
+    	//initialize new array
     	LinkedList<T>[] newArray = (LinkedList<T>[]) new LinkedList[newSize];
+    	for (int i = 0; i < newSize; i++) {
+    		newArray[i] = new LinkedList<T>();
+    	}
+    	
+    	//TODO: do we need an iterator here instead? I don't think your code is rehashing all the values, just the first one
+    	//loop through old array and rehash everything
     	LinkedList<T> llTemp = null;
     	int newHash = 0;
     	for (int i = 0; i < oldSize; i++) {
+//    		llTemp = this.htArray[i];
+//    		if (llTemp != null) {
+//        		Iterator<T> llIter = llTemp.iterator();
+//        		while (llIter.hasNext()) {
+//        			T nextItem = llIter.next();
+//        			newHash = hash(nextItem);
+//        			newArray[newHash].add(nextItem);
+//        		}
+//    		}
+    		
     		llTemp = this.htArray[i];
     		if (llTemp != null) {
     			if ( llTemp.size() != 0) {
-    	    		T firstval = llTemp.getFirst();
-    	    		if (firstval != null) {
-    	        		newHash = hash(firstval);
-    	        		newArray[newHash] = llTemp;	
-    	    		}
+    				Iterator<T> llIter = llTemp.iterator();
+    				while (llIter.hasNext()) {
+    					T nextItem = llIter.next();
+    					newHash = hash(nextItem);
+    					newArray[newHash].add(nextItem);
+    				}
+    				
+//    	    		T firstval = llTemp.getFirst();
+//    	    		if (firstval != null) {
+//    	        		newHash = hash(firstval);
+//    	        		newArray[newHash] = llTemp;	
+//    	    		}
     			}
     		}
     	}
@@ -242,9 +285,14 @@ public class HashTable<T> {
         		String line = "";
         		if (llTemp.size() > 0) {
         			line = Integer.toString(i) + ": [";
+        			boolean first = true;
         			Iterator<T> llIter = llTemp.iterator();
         			while (llIter.hasNext()) {
-        				line += llIter.next() + ", ";	// TODO: fix trailing comma
+        				if (!first) {
+        					line += (", ");
+        				}
+        				line += llIter.next();
+        				first = false;
         			}
         			line += "]";
         			out.println(line);
@@ -269,9 +317,39 @@ public class HashTable<T> {
      * @param out the place to print all the output.
      **/
     public void displayStats(PrintStream out) {
-        out.println("Parameters used: ");
-        // TODO: output required params
+    	
+    	double sum = 0;
+		int numGtZero = 0;
+		
+		for (int i = 0; i < this.htArray.length; i++) {
+    		LinkedList<T> llTemp = this.htArray[i];
+    		
+    		if (llTemp != null) {
+        		if (llTemp.size() > 0) {        			
+        			//check if this chain is longer than the previous longest
+        			if (llTemp.size() > longChain) {
+        				longChain = llTemp.size();
+        			}
+        			
+        			//incrementally calculate the total sum and total number of elements for the average
+        			numGtZero += 1;
+        			sum += llTemp.size();
+        		}
+    		}
+    		//if this node has 0 elements, update the counter
+    		else {lenZeroChain += 1;}
+    	}
+		
+		//calculate average chain length
+		avgLenChain = sum / numGtZero;
+        
+        //output required stats
         out.println("Hashtable statistics: ");
-        // TODO: output required stats
+        out.println("  Current table size: " + this.htArray.length);
+        out.println("  Number of items in table: " + this.keyCount);
+        out.println("  Current load factor: " + this.currentLoadFactor);
+        out.println("  Length of longest chain: " + longChain);
+        out.println("  Number of chains of length 0: " + lenZeroChain);
+        out.println("  Average length of chains of length >0: " + avgLenChain);
     }
 }
