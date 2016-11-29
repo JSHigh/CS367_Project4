@@ -1,6 +1,7 @@
 import java.awt.event.ItemEvent;
 import java.io.*;
 import java.lang.reflect.Array;
+import java.util.IllegalFormatCodePointException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -25,11 +26,9 @@ public class HashTable<T> {
 	private int keyCount = 0;
 	private int maxChainResizeCount = 0;
 	
-	private int longChain = 0;
-    private int lenZeroChain = 0;
-    private double avgLenChain = 0;
-	
 	private LinkedList<T>[] htArray;
+	
+	private Boolean debug = true; // TODO: turn off
     
     /**
      * Constructs an empty hashtable with the given initial size, maximum load
@@ -89,6 +88,11 @@ public class HashTable<T> {
     	this.MAX_CHAIN_LENGTH = maxChainLength;
     	this.htArray = (LinkedList<T>[]) new LinkedList[this.INIT_SIZE];
     }
+    
+    // TODO: comment
+    private int hash(T item) {
+    	return hash(item, -1);
+    }
     /**
      * Determines a hash value for a given object by taking the modulous
      * of the table length. If the modulo is negative, the value is
@@ -96,14 +100,16 @@ public class HashTable<T> {
      * @param item
      * @return
      */
-    private int hash(T item) {
+    private int hash(T item, int overrideLen) {
     	int tabLen = this.htArray.length;
+    	if (overrideLen >= 0) {
+    		tabLen = overrideLen;
+    	}
     	int itemHash = item.hashCode() % tabLen;
     	
     	if (itemHash < 0) {
     		itemHash += tabLen;
     	}
-    	System.out.println(itemHash + " | " + item.hashCode() + " | " + tabLen); //TODO: remove
     	return itemHash;
     }
     
@@ -155,23 +161,25 @@ public class HashTable<T> {
     	// check for bad value
         if (item == null) {throw new NullPointerException();}
         
-        //increment total count
-        this.keyCount += 1;
-        
         // get hash of item to insert
         int itemHash = hash(item);
+        if (debug) {
+        	System.out.println("Inserting " + item.toString() + " " + item.hashCode() + " " + itemHash);
+        }
+        
         LinkedList<T> llTemp = this.htArray[itemHash];
+        double newLoadFactor = (double) (keyCount + 1) / this.htArray.length;
         
         // try to insert into ht
         // case where no values for this key are yet in the ht
         if (llTemp == null) {
         	llTemp = new LinkedList<>();
         	llTemp.add(item);
-        	UpdateLoadFactor();
-        	// check if we need to resize due to load factor
-        	if (this.currentLoadFactor > MAX_LOAD_FACTOR) {
+        	// if we need to resize due to load factor
+        	if (newLoadFactor > this.MAX_LOAD_FACTOR) {
+        		// do it
         		resize();
-        		// rehash new item for new table size
+        		// and rehash new item for new table size
         		itemHash = hash(item);
         	}
         	// add linked list to ht
@@ -179,13 +187,33 @@ public class HashTable<T> {
         }
         else {
         	// update existing chain in ht
-            if (llTemp.size() + 1 > this.MAX_CHAIN_LENGTH && maxChainResizeCount < MAX_CHAIN_LENGTH_RESIZE) {
+            if (isChainTooLong(llTemp) && maxChainResizeCount < MAX_CHAIN_LENGTH_RESIZE) {
             	// if we have max chain length conflict, resize, but only a limited number of times
         		maxChainResizeCount += 1;
         		resize();
+        		// recalculate hash and get new list
+        		itemHash = hash(item);
+        		llTemp = this.htArray[itemHash];
+            }
+            if (newLoadFactor > this.MAX_LOAD_FACTOR) {
+            	resize();
+            	itemHash = hash(item);
+            	llTemp = this.htArray[itemHash];
             }
             llTemp.add(item);
         }
+        // increment total count
+        this.keyCount += 1;
+        
+        UpdateLoadFactor();
+        if (debug) {System.out.println("Item count: " + keyCount); System.out.println("Table size: " + Integer.toString(this.htArray.length)); dump(System.out);}
+    }
+    
+    private boolean isChainTooLong(LinkedList<T> llTemp) {
+    	if ( this.MAX_CHAIN_LENGTH > 0 && (llTemp.size() + 1) > this.MAX_CHAIN_LENGTH) {
+    		return true;
+    	}
+    	return false;
     }
     
     /**
@@ -193,9 +221,12 @@ public class HashTable<T> {
      */
     @SuppressWarnings("unchecked")
 	private void resize() {
-    	System.out.println("resizing..."); //TODO: remove
     	int oldSize = this.htArray.length;
     	int newSize = (oldSize * 2) + 1;
+    	
+    	if (debug) {
+    		System.out.println("resizing from " + Integer.toString(oldSize) + " to " + Integer.toString(newSize));
+    	}
     	
     	//initialize new array
     	LinkedList<T>[] newArray = (LinkedList<T>[]) new LinkedList[newSize];
@@ -203,37 +234,22 @@ public class HashTable<T> {
     		newArray[i] = new LinkedList<T>();
     	}
     	
-    	//TODO: do we need an iterator here instead? I don't think your code is rehashing all the values, just the first one
     	//loop through old array and rehash everything
     	LinkedList<T> llTemp = null;
     	int newHash = 0;
     	for (int i = 0; i < oldSize; i++) {
-//    		llTemp = this.htArray[i];
-//    		if (llTemp != null) {
-//        		Iterator<T> llIter = llTemp.iterator();
-//        		while (llIter.hasNext()) {
-//        			T nextItem = llIter.next();
-//        			newHash = hash(nextItem);
-//        			newArray[newHash].add(nextItem);
-//        		}
-//    		}
-    		
     		llTemp = this.htArray[i];
-    		if (llTemp != null) {
-    			if ( llTemp.size() != 0) {
+    		if (llTemp != null && llTemp.size() != 0) {
     				Iterator<T> llIter = llTemp.iterator();
     				while (llIter.hasNext()) {
     					T nextItem = llIter.next();
-    					newHash = hash(nextItem);
-    					newArray[newHash].add(nextItem);
+    					newHash = hash(nextItem, newSize);
+    					LinkedList<T> llAdd = newArray[newHash];
+    					llAdd.add(nextItem);
+    					if (debug) {
+    						System.out.println("Re-inserting " + nextItem.toString() + " " + nextItem.hashCode() + " " + newHash);
+    					}
     				}
-    				
-//    	    		T firstval = llTemp.getFirst();
-//    	    		if (firstval != null) {
-//    	        		newHash = hash(firstval);
-//    	        		newArray[newHash] = llTemp;	
-//    	    		}
-    			}
     		}
     	}
     	this.htArray = newArray;
@@ -251,7 +267,7 @@ public class HashTable<T> {
     public T delete(T item) {
     	T retVal = null;
     	if (keyCount == 0) {return null;}
-    	int itemHash = hash(item);
+    	int itemHash = hash(item, -1);
     	LinkedList<?> valueList = this.htArray[itemHash];
     	if (valueList == null) {return null;}
     	if (valueList.contains(item)) {
@@ -281,22 +297,19 @@ public class HashTable<T> {
     	out.println("Hashtable contents:");
     	for (int i = 0; i < this.htArray.length; i++) {
     		LinkedList<T> llTemp = this.htArray[i];
-    		if (llTemp != null) {
-        		String line = "";
-        		if (llTemp.size() > 0) {
-        			line = Integer.toString(i) + ": [";
-        			boolean first = true;
-        			Iterator<T> llIter = llTemp.iterator();
-        			while (llIter.hasNext()) {
-        				if (!first) {
-        					line += (", ");
-        				}
-        				line += llIter.next();
-        				first = false;
-        			}
-        			line += "]";
-        			out.println(line);
-        		}
+    		if (llTemp != null && llTemp.size() > 0) {
+        		String line = Integer.toString(i) + ": [";
+    			boolean first = true;
+    			Iterator<T> llIter = llTemp.iterator();
+    			while (llIter.hasNext()) {
+    				if (!first) {
+    					line += (", ");
+    				}
+    				line += llIter.next();
+    				first = false;
+    			}
+    			line += "]";
+    			out.println(line);
     		}
     	}
     }
@@ -317,7 +330,9 @@ public class HashTable<T> {
      * @param out the place to print all the output.
      **/
     public void displayStats(PrintStream out) {
-    	
+    	int longChain = 0;
+    	int lenZeroChain = 0;
+    	double avgLenChain = 0;
     	double sum = 0;
 		int numGtZero = 0;
 		
@@ -335,9 +350,15 @@ public class HashTable<T> {
         			numGtZero += 1;
         			sum += llTemp.size();
         		}
+        		// if this node has 0 elements, update the counter
+        		 else {
+        			 lenZeroChain += 1;
+        			 }
     		}
-    		//if this node has 0 elements, update the counter
-    		else {lenZeroChain += 1;}
+    		// if this node is null, update the counter
+    		else {
+    			lenZeroChain += 1;
+    			}
     	}
 		
 		//calculate average chain length
@@ -345,11 +366,11 @@ public class HashTable<T> {
         
         //output required stats
         out.println("Hashtable statistics: ");
-        out.println("  Current table size: " + this.htArray.length);
-        out.println("  Number of items in table: " + this.keyCount);
-        out.println("  Current load factor: " + this.currentLoadFactor);
-        out.println("  Length of longest chain: " + longChain);
-        out.println("  Number of chains of length 0: " + lenZeroChain);
-        out.println("  Average length of chains of length >0: " + avgLenChain);
+        out.println("  current table size: " + this.htArray.length);
+        out.println("  # items in table: " + this.keyCount);
+        out.println("  current load factor: " + this.currentLoadFactor);
+        out.println("  longest chain length: " + longChain);
+        out.println("  # 0-length chains: " + lenZeroChain);
+        out.println("  avg (non=0) chain length: " + avgLenChain);
     }
 }
