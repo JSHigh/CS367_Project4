@@ -25,6 +25,10 @@ public class HashTable<T> {
 	private int keyCount = 0;
 	private int maxChainResizeCount = 0;
 	
+	private int longChain = 0;
+    private int lenZeroChain = 0;
+    private double avgLenChain = 0;
+	
 	private LinkedList<T>[] htArray;
     
     /**
@@ -250,9 +254,14 @@ public class HashTable<T> {
         		String line = "";
         		if (llTemp.size() > 0) {
         			line = Integer.toString(i) + ": [";
+        			boolean first = true;
         			Iterator<T> llIter = llTemp.iterator();
         			while (llIter.hasNext()) {
-        				line += llIter.next() + ", ";	// TODO: fix trailing comma
+        				if (!first) {
+        					line += (", ");
+        				}
+        				line += llIter.next();
+        				first = false;
         			}
         			line += "]";
         			out.println(line);
@@ -277,60 +286,39 @@ public class HashTable<T> {
      * @param out the place to print all the output.
      **/
     public void displayStats(PrintStream out) {
-        // TODO: output required params
-        out.println("Hashtable statistics: ");
-        int longChain = 0;
-        int lenZeroChain = 0;
-        double avgLenChain = 0;
-        gatherStats(longChain, lenZeroChain, avgLenChain);
-        
-        // TODO: output required stats
-        out.println("  Current table size: " + this.htArray.length); //htArray.size
-        out.println("  Number of items in table: " + this.keyCount);
-        out.println("  Current load factor: " + this.currentLoadFactor); //use to String?
-        out.println("  Length of longest chain: " + longChain);
-        out.println("  Number of chains of length 0: " + lenZeroChain);
-        out.println("  Average length of chains of length >0: " + avgLenChain);
-    }
-
-    /**
-     * Helper function to determine the statistics for the hash table
-     * @param longChain
-     * @param lenZeroChain
-     * @param avgLenChain
-     */
-	private void gatherStats(int longChain, int lenZeroChain, double avgLenChain) {
-		// TODO Auto-generated method stub
+    	
+    	double sum = 0;
+		int numGtZero = 0;
+		
 		for (int i = 0; i < this.htArray.length; i++) {
     		LinkedList<T> llTemp = this.htArray[i];
-    		int numGtZero = 0;
+    		
     		if (llTemp != null) {
-        		if (llTemp.size() > 0) {
+        		if (llTemp.size() > 0) {        			
         			//check if this chain is longer than the previous longest
         			if (llTemp.size() > longChain) {
         				longChain = llTemp.size();
         			}
+        			
+        			//incrementally calculate the total sum and total number of elements for the average
         			numGtZero += 1;
-        			avgLenChain = calculateAverage(avgLenChain, llTemp.size(), numGtZero);
+        			sum += llTemp.size();
         		}
     		}
     		//if this node has 0 elements, update the counter
     		else {lenZeroChain += 1;}
     	}
-	}
-
-	/**
-	 * Calculates an average given a previous average, new datapoint to add
-	 * and the new total number of datapoints
-	 * 
-	 * @param curAvg - current average
-	 * @param size - new data value to add to the average
-	 * @param numValues - new total number of datapoints
-	 * @returns new average based on input parameters
-	 */
-	private double calculateAverage(double curAvg, int size, int numValues) {
-		int oldSize = numValues - 1;
-		double newSum = (curAvg * oldSize) + size;
-		return newSum/numValues;
-	}
+		
+		//calculate average chain length
+		avgLenChain = sum / numGtZero;
+        
+        //output required stats
+        out.println("Hashtable statistics: ");
+        out.println("  Current table size: " + this.htArray.length);
+        out.println("  Number of items in table: " + sum);
+        out.println("  Current load factor: " + this.currentLoadFactor);
+        out.println("  Length of longest chain: " + longChain);
+        out.println("  Number of chains of length 0: " + lenZeroChain);
+        out.println("  Average length of chains of length >0: " + avgLenChain);
+    }
 }
