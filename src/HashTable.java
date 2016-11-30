@@ -1,7 +1,4 @@
-import java.awt.event.ItemEvent;
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.IllegalFormatCodePointException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -28,7 +25,7 @@ public class HashTable<T> {
 	
 	private LinkedList<T>[] htArray;
 	
-	private Boolean debug = true; // TODO: turn off
+	private Boolean debug = false; // TODO: turn off
     
     /**
      * Constructs an empty hashtable with the given initial size, maximum load

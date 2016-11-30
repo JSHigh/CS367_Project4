@@ -91,7 +91,8 @@ public class TestHash {
             // It is important to give the seed so you can reproduce results.
             Random randGen = new Random(seed);
             for (int k = 0; k < numHash; k++) {
-                table.insert(new Integer(randGen.nextInt()));
+                table.insert(new Integer(randGen.nextInt()));  //TODO: uncomment for random gen
+                //table.insert(new Integer(3*k));  //TODO: comment out for random gen
             }
 
             table.displayStats(myOut); 

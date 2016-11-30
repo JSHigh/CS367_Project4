@@ -63,6 +63,41 @@ where filename can be any file you want.
 What are the hashtable statistics for each of the runs?  
 
 Answer:
+Run1
+Hashtable statistics: 
+  current table size: 60
+  # items in table: 439
+  current load factor: 7.316666666666666
+  longest chain length: 14
+  # 0-length chains: 0
+  avg (non=0) chain length: 7.316666666666666
+  
+Run2
+Hashtable statistics: 
+  current table size: 61
+  # items in table: 439
+  current load factor: 7.19672131147541
+  longest chain length: 14
+  # 0-length chains: 0
+  avg (non=0) chain length: 7.19672131147541
+
+Run3
+Hashtable statistics: 
+  current table size: 60
+  # items in table: 439
+  current load factor: 7.316666666666666
+  longest chain length: 22
+  # 0-length chains: 40
+  avg (non=0) chain length: 21.95
+
+Run4
+Hashtable statistics: 
+  current table size: 61
+  # items in table: 439
+  current load factor: 7.19672131147541
+  longest chain length: 8
+  # 0-length chains: 0
+  avg (non=0) chain length: 7.19672131147541
 
 
 5) In this question you will again run TestHash four times, this time using the 
@@ -84,6 +119,41 @@ where filename can be any file you want.
 What are the hashtable statistics for each of the runs?  
 
 Answer:
+Run5
+Hashtable statistics: 
+  current table size: 975
+  # items in table: 439
+  current load factor: 0.4502564102564103
+  longest chain length: 4
+  # 0-length chains: 616
+  avg (non=0) chain length: 1.222841225626741
+
+Run6
+Hashtable statistics: 
+  current table size: 991
+  # items in table: 439
+  current load factor: 0.4429868819374369
+  longest chain length: 4
+  # 0-length chains: 638
+  avg (non=0) chain length: 1.2407932011331444
+
+Run7
+Hashtable statistics: 
+  current table size: 975
+  # items in table: 439
+  current load factor: 0.4502564102564103
+  longest chain length: 2
+  # 0-length chains: 650
+  avg (non=0) chain length: 1.3507692307692307
+
+Run8
+Hashtable statistics: 
+  current table size: 991
+  # items in table: 439
+  current load factor: 0.4429868819374369
+  longest chain length: 1
+  # 0-length chains: 553
+  avg (non=0) chain length: 1.0
 
 
 6) In this question you will again run TestHash four times, this time using the 
@@ -98,6 +168,41 @@ For all these runs you will use the TestHash program as written.
 What are the hashtable statistics for each of the runs?  
 
 Answer:
+Run9
+Hashtable statistics: 
+  current table size: 47
+  # items in table: 439
+  current load factor: 9.340425531914894
+  longest chain length: 17
+  # 0-length chains: 0
+  avg (non=0) chain length: 9.340425531914894
+
+Run10
+Hashtable statistics: 
+  current table size: 383
+  # items in table: 439
+  current load factor: 1.1462140992167102
+  longest chain length: 6
+  # 0-length chains: 128
+  avg (non=0) chain length: 1.7215686274509805
+
+Run11
+Hashtable statistics: 
+  current table size: 767
+  # items in table: 439
+  current load factor: 0.5723598435462842
+  longest chain length: 4
+  # 0-length chains: 429
+  avg (non=0) chain length: 1.2988165680473374
+
+Run12
+Hashtable statistics: 
+  current table size: 767
+  # items in table: 439
+  current load factor: 0.5723598435462842
+  longest chain length: 4
+  # 0-length chains: 429
+  avg (non=0) chain length: 1.2988165680473374
 
 
 7) Briefly analyze your results from questions 4, 5, and 6.  Your analysis 
@@ -110,4 +215,9 @@ hashtable):
 and describe how they are related.
 
 Answer:
-0
+Smaller maximum load factor results in much larger table sizes and a great deal more 0-length chains. This makes sense since a smaller max load factor means that we have to resize the table more frequently. Since we have the same number of elements as when using a larger load factor, we will have to have a larger number of empty spaces in the hash table.
+Table size has a drastic impact on the max chain length and the average chain length, especially when combined with a lower load factor. When using a prime table size (such run 3 vs run 4) we saw a gigantic improvement in distribution where we went from 21 zero-length chains with a non-prime number to 0 zero-length chains with a prime table size.
+Random numbers tend to lead to more balanced tables whereas the specific integers tend to clump together and create strange distributions. For example, run 3 created chains of identical size but only at every 3 positions so it's not well balanced. Run 8 created another strange distribution of alternating betwen the integer entered and an initially negative hash value (then adjusted by the table size). This ended up creating chains of all length 0 but more than half the table was empty resulting in a very poor distribution.
+At larger load factors, adding a max chain length greatly decreased the quality of the distribution where we ended up about 1/3 of the table empty when adding a max length compared to using the whole table when not using a max length. Obviously adding a max length also will decrease your average chain length since it is capped. This results in a larger table size and generally leaves you open to more zero-length chains and unused space.
+
+Overall, to get the smallest, most balanced hash tables, you want prime table sizes, larger load factors, no limits on the max chain size, and generally random values entered into the table.
